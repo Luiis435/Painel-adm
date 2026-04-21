@@ -2,136 +2,126 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>ADM CineTeca - Gestão Pro</title>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        // Configuração do Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyB46-sCSiJ1HSMARLY1aBgECu2yxnOKYSQ",
-            authDomain: "cineteca-8f89c.firebaseapp.com",
-            projectId: "cineteca-8f89c",
-            storageBucket: "cineteca-8f89c.firebasestorage.app",
-            messagingSenderId: "944562373253",
-            appId: "1:944562373253:web:1ba79111e58d2ec44e5fec"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const TMDB_KEY = "49a7a1537e0a46f1f09d04d6dc111698";
-
-        window.addFilme = async () => {
-            const tituloDB = document.getElementById('tituloDB').value;
-            const buscaCapa = document.getElementById('buscaCapa').value;
-            const urlVideo = document.getElementById('urlVideo').value;
-            const rating = document.getElementById('rating').value;
-            const categoria = document.getElementById('categoria').value;
-
-            if(!tituloDB || !urlVideo) {
-                alert("O Título e a URL do vídeo são obrigatórios!");
-                return;
-            }
-
-            document.getElementById('status').innerText = "🔍 Processando...";
-            
-            try {
-                let capaFinal = "https://via.placeholder.com/500x750?text=Sem+Capa";
-                
-                // Busca no TMDB (Filme ou Série baseado na categoria)
-                if(buscaCapa) {
-                    const tipoBusca = categoria === "serie" ? "tv" : "movie";
-                    const res = await fetch(`https://api.themoviedb.org/3/search/${tipoBusca}?api_key=${TMDB_KEY}&query=${encodeURIComponent(buscaCapa)}&language=pt-BR`);
-                    const data = await res.json();
-                    if(data.results && data.results.length > 0) {
-                        capaFinal = `https://image.tmdb.org/t/p/w500${data.results[0].poster_path}`;
-                    }
-                }
-
-                // Identifica se é link direto (MP4/Snaptube) ou Iframe
-                const isDirectLink = urlVideo.includes('.mp4') || urlVideo.includes('snaptube') || urlVideo.includes('googlevideo');
-                const tipoFinal = isDirectLink ? 'video/mp4' : 'iframe';
-
-                await addDoc(collection(db, "videos"), {
-                    title: tituloDB,
-                    thumb: capaFinal,
-                    url: urlVideo,
-                    videoType: tipoFinal,
-                    rating: rating,
-                    category: categoria, // Nova Propriedade
-                    createdAt: Date.now()
-                });
-
-                document.getElementById('status').innerText = "✅ Adicionado com sucesso!";
-                // Limpar campos
-                ['tituloDB', 'buscaCapa', 'urlVideo'].forEach(id => document.getElementById(id).value = "");
-                
-            } catch (error) {
-                console.error(error);
-                document.getElementById('status').innerText = "❌ Erro ao salvar.";
-            }
-        };
-
-        onSnapshot(query(collection(db, "videos"), orderBy("createdAt", "desc")), (snap) => {
-            const l = document.getElementById('lista');
-            l.innerHTML = "";
-            snap.forEach(d => {
-                const data = d.data();
-                l.innerHTML += `
-                <div style="padding:10px; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center">
-                    <div>
-                        <strong style="color:#E50914">[${data.category.toUpperCase()}]</strong> ${data.title}
-                    </div>
-                    <button onclick="apagar('${d.id}')" style="color:red; background:none; border:none; cursor:pointer; width:auto; margin:0;">Apagar</button>
-                </div>`;
-            });
-        });
-
-        window.apagar = async (id) => { if(confirm("Deseja realmente apagar este item?")) await deleteDoc(doc(db, "videos", id)); };
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - CineTeca</title>
     <style>
-        body { background: #0b0b0b; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
-        .card { background: #141414; padding: 25px; border-radius: 12px; max-width: 500px; margin: auto; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h2 { text-align: center; color: #E50914; letter-spacing: 2px; margin-bottom: 20px; }
-        label { font-size: 0.75em; color: #888; font-weight: bold; text-transform: uppercase; display: block; margin-top: 10px; }
-        input, select, button { width: 100%; padding: 12px; margin: 5px 0 15px 0; border-radius: 5px; background: #222; color: white; border: 1px solid #444; box-sizing: border-box; font-size: 1em; }
-        input:focus { border-color: #E50914; outline: none; }
-        button { background: #E50914; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; margin-top: 10px; }
+        body { background: #111; color: white; font-family: 'Inter', sans-serif; padding: 20px; display: flex; justify-content: center; }
+        .admin-box { width: 100%; max-width: 500px; background: #181818; padding: 30px; border-radius: 12px; border: 1px solid #333; }
+        h1 { color: #E50914; text-align: center; margin-bottom: 25px; }
+        label { display: block; margin-top: 15px; color: #aaa; font-size: 0.85rem; font-weight: bold; }
+        input, select { width: 100%; height: 45px; background: #252525; border: 1px solid #333; color: white; padding: 0 12px; margin-top: 5px; border-radius: 6px; box-sizing: border-box; outline: none; }
+        input:focus { border-color: #E50914; }
+        
+        .upload-area { margin-top: 20px; padding: 20px; border: 2px dashed #444; text-align: center; border-radius: 8px; cursor: pointer; transition: 0.3s; }
+        .upload-area:hover { border-color: #E50914; background: #1f1f1f; }
+        
+        button { width: 100%; height: 50px; background: #E50914; color: white; border: none; font-weight: bold; margin-top: 25px; border-radius: 6px; cursor: pointer; font-size: 1rem; }
         button:hover { background: #b20710; }
-        #lista { margin-top: 25px; max-height: 300px; overflow-y: auto; background: #1a1a1a; border-radius: 8px; }
-        .snaptube-info { font-size: 0.7em; color: #ffc107; margin-bottom: 10px; display: block; }
+        .status { margin-top: 15px; text-align: center; font-size: 0.9rem; font-weight: 500; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>ADM CINETECA</h2>
-        
-        <label>Título de Exibição:</label>
-        <input type="text" id="tituloDB" placeholder="Ex: Batman (2022)">
-        
-        <label>Tipo de Conteúdo:</label>
-        <select id="categoria">
-            <option value="filme">Filme</option>
-            <option value="serie">Série / Episódio</option>
-        </select>
 
-        <label>Nome para buscar Capa (TMDB):</label>
-        <input type="text" id="buscaCapa" placeholder="Ex: The Batman">
-        
-        <label>URL do vídeo ou Link Snaptube:</label>
-        <input type="text" id="urlVideo" placeholder="Cole o link do iframe ou MP4 aqui">
-        <span class="snaptube-info">* Suporta links diretos, MP4 e Iframes.</span>
-        
-        <label>Classificação:</label>
-        <select id="rating">
-            <option value="infantil">Livre / Kids</option>
-            <option value="adulto">18+ / Adulto</option>
-        </select>
-        
-        <button onclick="addFilme()">ADICIONAR AO CATÁLOGO</button>
-        <p id="status" style="text-align:center; font-weight:bold;"></p>
-        
-        <div id="lista"></div>
+<div class="admin-box">
+    <h1>CineTeca Admin</h1>
+    
+    <label>Título do Conteúdo</label>
+    <input type="text" id="title" placeholder="Ex: Inception (2010)">
+
+    <label>URL do Vídeo (YouTube, Dropbox ou MP4)</label>
+    <input type="text" id="url" placeholder="Cole o link aqui...">
+
+    <label>Link da Capa (Thumbnail)</label>
+    <input type="text" id="thumb" placeholder="https://image.tmdb.org/t/p/w500/...">
+
+    <label>Gênero</label>
+    <input type="text" id="genre" placeholder="Ex: Ficção Científica">
+
+    <div style="display: flex; gap: 10px;">
+        <div style="flex: 1;">
+            <label>Tipo</label>
+            <select id="mediaType">
+                <option value="filme">Filme</option>
+                <option value="serie">Série</option>
+            </select>
+        </div>
+        <div style="flex: 1;">
+            <label>Público</label>
+            <select id="rating">
+                <option value="adulto">Adulto</option>
+                <option value="infantil">Infantil</option>
+            </select>
+        </div>
     </div>
+
+    <button onclick="uploadVideo()">PUBLICAR NO APP</button>
+    <div id="status" class="status"></div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyB46-sCSiJ1HSMARLY1aBgECu2yxnOKYSQ",
+        authDomain: "cineteca-8f89c.firebaseapp.com",
+        projectId: "cineteca-8f89c",
+        storageBucket: "cineteca-8f89c.firebasestorage.app",
+        messagingSenderId: "944562373253",
+        appId: "1:944562373253:web:1ba79111e58d2ec44e5fec"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.uploadVideo = async () => {
+        const title = document.getElementById('title').value;
+        let url = document.getElementById('url').value;
+        const thumb = document.getElementById('thumb').value;
+        const genre = document.getElementById('genre').value;
+        const mediaType = document.getElementById('mediaType').value;
+        const rating = document.getElementById('rating').value;
+        const status = document.getElementById('status');
+
+        if(!title || !url || !thumb) return alert("Por favor, preencha Título, URL e Capa!");
+
+        status.innerText = "Processando link...";
+        status.style.color = "white";
+
+        // Lógica de Conversão Automática Dropbox
+        if (url.includes("dropbox.com")) {
+            url = url.replace(/\?dl=0/g, "?raw=1");
+            url = url.replace(/www\.dropbox\.com/g, "dl.dropboxusercontent.com");
+        }
+
+        // Detectar se é YouTube ou Arquivo Direto
+        let videoType = 'file';
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            videoType = 'embed';
+        }
+
+        try {
+            await addDoc(collection(db, "videos"), {
+                title,
+                url,
+                thumb,
+                genre,
+                mediaType,
+                rating,
+                videoType: videoType,
+                createdAt: serverTimestamp()
+            });
+            
+            status.style.color = "#2ecc71";
+            status.innerText = "Sucesso! Conteúdo disponível no app.";
+            document.querySelectorAll('input').forEach(i => i.value = "");
+        } catch (e) {
+            status.style.color = "#e74c3c";
+            status.innerText = "Erro ao salvar: " + e.message;
+        }
+    }
+</script>
+
 </body>
 </html>
+
