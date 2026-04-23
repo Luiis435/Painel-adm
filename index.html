@@ -3,87 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineTeca - Admin TMDB</title>
+    <title>CineTeca - Admin Master</title>
     <style>
-        :root { --accent: #E50914; --bg: #141414; --tmdb-blue: #01b4e4; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
-        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        :root { --accent: #E50914; --bg: #111; --tmdb-blue: #01b4e4; }
+        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
         
-        .card { background: #222; padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #333; }
-        h1, h3 { margin-top: 0; }
-        
-        input, select { width: 100%; padding: 12px; margin: 10px 0; background: #333; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; }
-        
-        .search-box { display: flex; gap: 10px; margin-bottom: 15px; }
-        .btn-search { background: var(--tmdb-blue); border: none; color: white; padding: 0 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        
-        #tmdb-results { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: thin; }
-        .result-item { min-width: 110px; cursor: pointer; transition: transform 0.2s; }
-        .result-item:hover { transform: scale(1.05); }
-        .result-item img { width: 100%; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        .result-item p { font-size: 11px; margin-top: 5px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* Telas */
+        #auth-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        #admin-content { display: none; padding-top: 20px; }
 
-        .btn-add { width: 100%; padding: 15px; background: var(--accent); border: none; color: white; font-weight: bold; cursor: pointer; border-radius: 6px; font-size: 1rem; margin-top: 10px; }
-        
-        .video-item { display: flex; align-items: center; background: #1f1f1f; padding: 12px; margin-bottom: 12px; border-radius: 8px; gap: 20px; border-left: 4px solid var(--accent); }
-        .video-item img { width: 50px; height: 75px; object-fit: cover; border-radius: 4px; }
-        .video-info { flex: 1; }
-        .btn-del { background: transparent; color: #ff6b6b; border: 1px solid #ff6b6b; padding: 8px 12px; cursor: pointer; border-radius: 4px; transition: 0.3s; }
-        .btn-del:hover { background: #ff6b6b; color: white; }
+        /* Estilização de Cards */
+        .card { background: #1f1f1f; padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #333; }
+        h1, h2, h3 { margin-bottom: 15px; }
 
-        #admin-content { display: none; }
-        #loading { text-align: center; padding: 50px; font-size: 1.2rem; }
+        /* Inputs e Botões */
+        input, select { width: 100%; padding: 12px; margin: 10px 0; background: #2b2b2b; border: 1px solid #444; color: white; border-radius: 8px; box-sizing: border-box; }
+        .btn-google { background: white; color: #000; border: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 1rem; }
+        .btn-search { background: var(--tmdb-blue); border: none; color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-save { background: var(--accent); border: none; color: white; width: 100%; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1rem; margin-top: 10px; }
+
+        /* TMDB Results */
+        #tmdb-results { display: flex; gap: 15px; overflow-x: auto; padding: 10px 0; margin-bottom: 10px; }
+        .tmdb-item { min-width: 100px; cursor: pointer; transition: 0.3s; }
+        .tmdb-item:hover { transform: scale(1.08); }
+        .tmdb-item img { width: 100%; border-radius: 6px; }
+        .tmdb-item p { font-size: 10px; text-align: center; margin-top: 5px; }
+
+        /* Lista de Itens */
+        .list-item { display: flex; align-items: center; background: #1a1a1a; padding: 10px; border-radius: 8px; margin-bottom: 10px; gap: 15px; border-left: 4px solid var(--accent); }
+        .list-item img { width: 45px; height: 65px; object-fit: cover; border-radius: 4px; }
+        .list-info { flex: 1; }
+        .btn-del { background: none; border: 1px solid #ff4d4d; color: #ff4d4d; padding: 5px 12px; border-radius: 4px; cursor: pointer; }
+        .btn-del:hover { background: #ff4d4d; color: white; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="loading">Autenticando administrador...</div>
+    <div id="auth-screen">
+        <h1 style="color: var(--accent); font-weight: 900;">CINETECA ADMIN</h1>
+        <p id="auth-msg">Acesse para gerenciar o catálogo</p>
+        <button class="btn-google" id="login-trigger">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
+            Entrar com Google
+        </button>
+    </div>
 
     <div id="admin-content">
-        <h1>CineTeca Admin 🎬</h1>
-        
+        <header style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>Painel de Controle</h2>
+            <button onclick="location.reload()" style="background: none; border: 1px solid #666; color: #aaa; cursor: pointer; padding: 5px 10px; border-radius: 4px;">Sair</button>
+        </header>
+
         <div class="card">
-            <h3>1. Buscar no TMDB</h3>
-            <div class="search-box">
-                <input type="text" id="tmdb-query" placeholder="Nome do filme ou série...">
-                <button type="button" class="btn-search" onclick="searchTMDB()">BUSCAR</button>
+            <h3>1. Pesquisar no TMDB</h3>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="tmdb-query" placeholder="Ex: Vingadores, Breaking Bad...">
+                <button class="btn-search" id="tmdb-btn">BUSCAR</button>
             </div>
             <div id="tmdb-results"></div>
         </div>
 
         <div class="card">
-            <h3>2. Confirmar Detalhes</h3>
-            <form id="add-form">
-                <input type="text" id="title" placeholder="Título Oficial" required>
-                <input type="url" id="thumb" placeholder="URL da Capa" required>
-                <input type="url" id="url" placeholder="Link do Vídeo (YT, Dropbox, MP4)" required>
+            <h3>2. Confirmar Dados</h3>
+            <form id="content-form">
+                <input type="text" id="f-title" placeholder="Título" required>
+                <input type="text" id="f-thumb" placeholder="URL da Capa" required>
+                <input type="text" id="f-url" placeholder="URL do Vídeo (YouTube, Dropbox, MP4)" required>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
-                    <select id="genre">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <select id="f-genre">
                         <option value="Ação">Ação</option>
                         <option value="Comédia">Comédia</option>
-                        <option value="Drama">Drama</option>
                         <option value="Terror">Terror</option>
+                        <option value="Drama">Drama</option>
                         <option value="Ficção">Ficção</option>
-                        <option value="Infantil">Infantil</option>
                         <option value="Anime">Anime</option>
+                        <option value="Infantil">Infantil</option>
                     </select>
-                    <select id="mediaType">
+                    <select id="f-type">
                         <option value="filme">Filme</option>
                         <option value="serie">Série</option>
                     </select>
-                    <select id="rating">
-                        <option value="adulto">Público Geral</option>
-                        <option value="infantil">Infantil (Kids)</option>
+                    <select id="f-rating">
+                        <option value="adulto">Geral</option>
+                        <option value="infantil">Infantil</option>
                     </select>
                 </div>
-                <button type="submit" class="btn-add">SALVAR NO FIREBASE</button>
+                <button type="submit" class="btn-save">PUBLICAR NO APP</button>
             </form>
         </div>
 
-        <h3>Catálogo Atual</h3>
-        <div id="manage-list"></div>
+        <h3>Catálogo Ativo</h3>
+        <div id="catalog-list"></div>
     </div>
 </div>
 
@@ -109,120 +122,127 @@
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
+    // ELEMENTOS
+    const authScreen = document.getElementById('auth-screen');
+    const adminContent = document.getElementById('admin-content');
+    const loginBtn = document.getElementById('login-trigger');
+    const authMsg = document.getElementById('auth-msg');
+
     // --- AUTENTICAÇÃO ---
+    loginBtn.onclick = () => {
+        signInWithPopup(auth, provider).catch(e => alert("Erro: " + e.message));
+    };
+
     onAuthStateChanged(auth, (user) => {
-        if (user && user.email === ADMIN_EMAIL) {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('admin-content').style.display = 'block';
-            loadManagementList();
-        } else if (user) {
-            alert("Acesso negado: " + user.email);
-            auth.signOut();
+        if (user) {
+            if (user.email === ADMIN_EMAIL) {
+                authScreen.style.display = 'none';
+                adminContent.style.display = 'block';
+                loadCatalog();
+            } else {
+                authMsg.innerText = "Acesso Negado: " + user.email;
+                authMsg.style.color = "red";
+                auth.signOut();
+            }
         } else {
-            signInWithPopup(auth, provider).catch(err => console.error("Erro login:", err));
+            authScreen.style.display = 'flex';
+            adminContent.style.display = 'none';
         }
     });
 
     // --- BUSCA TMDB ---
-    window.searchTMDB = async () => {
+    document.getElementById('tmdb-btn').onclick = async () => {
         const query = document.getElementById('tmdb-query').value;
-        const type = document.getElementById('mediaType').value; 
-        const endpoint = type === 'filme' ? 'movie' : 'tv';
-
+        const type = document.getElementById('f-type').value === 'filme' ? 'movie' : 'tv';
         if(!query) return;
 
         try {
-            const res = await fetch(`https://api.themoviedb.org/3/search/${endpoint}?api_key=${TMDB_KEY}&query=${encodeURIComponent(query)}&language=pt-BR`);
+            const res = await fetch(`https://api.themoviedb.org/3/search/${type}?api_key=${TMDB_KEY}&query=${encodeURIComponent(query)}&language=pt-BR`);
             const data = await res.json();
-            renderResults(data.results);
-        } catch (err) { alert("Erro ao buscar no TMDB"); }
+            const resultsDiv = document.getElementById('tmdb-results');
+            resultsDiv.innerHTML = "";
+
+            data.results.slice(0, 6).forEach(item => {
+                const title = item.title || item.name;
+                const poster = item.poster_path ? `https://image.tmdb.org/t/p/w342${item.poster_path}` : 'https://via.placeholder.com/342x513';
+                
+                const div = document.createElement('div');
+                div.className = 'tmdb-item';
+                div.innerHTML = `<img src="${poster}"><p>${title}</p>`;
+                div.onclick = () => {
+                    document.getElementById('f-title').value = title;
+                    document.getElementById('f-thumb').value = poster;
+                    document.getElementById('f-url').focus();
+                };
+                resultsDiv.appendChild(div);
+            });
+        } catch (e) { alert("Erro ao buscar no TMDB"); }
     };
 
-    function renderResults(results) {
-        const div = document.getElementById('tmdb-results');
-        div.innerHTML = "";
-        results.slice(0, 8).forEach(item => {
-            const movieDiv = document.createElement('div');
-            movieDiv.className = 'result-item';
-            const title = item.title || item.name; // Filmes usam 'title', Séries usam 'name'
-            const poster = item.poster_path ? `https://image.tmdb.org/t/p/w342${item.poster_path}` : 'https://via.placeholder.com/342x513?text=Sem+Foto';
-            
-            movieDiv.innerHTML = `
-                <img src="${poster}">
-                <p title="${title}">${title}</p>
-            `;
-            movieDiv.onclick = () => {
-                document.getElementById('title').value = title;
-                document.getElementById('thumb').value = poster;
-                document.getElementById('url').focus();
-            };
-            div.appendChild(movieDiv);
-        });
-    }
-
     // --- SALVAR NO FIREBASE ---
-    document.getElementById('add-form').onsubmit = async (e) => {
+    document.getElementById('content-form').onsubmit = async (e) => {
         e.preventDefault();
-        const btn = e.submitter;
-        btn.disabled = true;
-        btn.innerText = "Salvando...";
+        const btn = e.target.querySelector('button');
+        btn.disabled = true; btn.innerText = "Publicando...";
 
-        const payload = {
-            title: document.getElementById('title').value,
-            thumb: document.getElementById('thumb').value,
-            url: document.getElementById('url').value,
-            genre: document.getElementById('genre').value,
-            mediaType: document.getElementById('mediaType').value,
-            rating: document.getElementById('rating').value,
+        const data = {
+            title: document.getElementById('f-title').value,
+            thumb: document.getElementById('f-thumb').value,
+            url: document.getElementById('f-url').value,
+            genre: document.getElementById('f-genre').value,
+            mediaType: document.getElementById('f-type').value,
+            rating: document.getElementById('f-rating').value,
             createdAt: serverTimestamp()
         };
 
         try {
-            const col = payload.mediaType === 'filme' ? 'filmes' : 'videos';
-            await addDoc(collection(db, col), payload);
-            alert("Conteúdo publicado!");
+            const col = data.mediaType === 'filme' ? 'filmes' : 'videos';
+            await addDoc(collection(db, col), data);
+            alert("Sucesso!");
             e.target.reset();
             document.getElementById('tmdb-results').innerHTML = "";
-        } catch (err) { alert("Erro: " + err.message); }
-        finally { btn.disabled = false; btn.innerText = "SALVAR NO FIREBASE"; }
+        } catch (err) { alert("Erro ao salvar"); }
+        finally { btn.disabled = false; btn.innerText = "PUBLICAR NO APP"; }
     };
 
-    // --- GERENCIAR LISTA ---
-    function loadManagementList() {
-        const listDiv = document.getElementById('manage-list');
-        const cols = ['filmes', 'videos'];
-        
-        cols.forEach(colName => {
+    // --- LISTAR CATALOGO ---
+    function loadCatalog() {
+        const listDiv = document.getElementById('catalog-list');
+        listDiv.innerHTML = "";
+        const collections = ['filmes', 'videos'];
+
+        collections.forEach(colName => {
             const q = query(collection(db, colName), orderBy("createdAt", "desc"));
             onSnapshot(q, (snap) => {
                 snap.docChanges().forEach(change => {
                     const id = change.doc.id;
                     const v = change.doc.data();
                     if(change.type === "added") {
-                        const div = document.createElement('div');
-                        div.id = `adm-${id}`;
-                        div.className = 'video-item';
-                        div.innerHTML = `
+                        const item = document.createElement('div');
+                        item.id = `item-${id}`;
+                        item.className = 'list-item';
+                        item.innerHTML = `
                             <img src="${v.thumb}">
-                            <div class="video-info">
+                            <div class="list-info">
                                 <strong>${v.title}</strong><br>
                                 <small>${colName.toUpperCase()} | ${v.genre}</small>
                             </div>
                             <button class="btn-del" onclick="deleteItem('${colName}', '${id}')">Excluir</button>
                         `;
-                        listDiv.prepend(div);
+                        listDiv.prepend(item);
                     }
-                    if(change.type === "removed") document.getElementById(`adm-${id}`)?.remove();
+                    if(change.type === "removed") document.getElementById(`item-${id}`)?.remove();
                 });
             });
         });
     }
 
     window.deleteItem = async (col, id) => {
-        if(confirm("Deseja apagar este vídeo?")) {
+        if(confirm("Excluir permanentemente?")) {
             await deleteDoc(doc(db, col, id));
         }
     };
 </script>
+
 </body>
 </html>
