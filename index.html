@@ -19,7 +19,7 @@
 
         /* Inputs e Botões */
         input, select { width: 100%; padding: 12px; margin: 10px 0; background: #2b2b2b; border: 1px solid #444; color: white; border-radius: 8px; box-sizing: border-box; }
-        .btn-google { background: white; color: #000; border: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 1rem; }
+        .btn-adm { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; width: 200px; }
         .btn-search { background: var(--tmdb-blue); border: none; color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .btn-save { background: var(--accent); border: none; color: white; width: 100%; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1rem; margin-top: 10px; }
 
@@ -35,7 +35,6 @@
         .list-item img { width: 45px; height: 65px; object-fit: cover; border-radius: 4px; }
         .list-info { flex: 1; }
         .btn-del { background: none; border: 1px solid #ff4d4d; color: #ff4d4d; padding: 5px 12px; border-radius: 4px; cursor: pointer; }
-        .btn-del:hover { background: #ff4d4d; color: white; }
     </style>
 </head>
 <body>
@@ -43,11 +42,11 @@
 <div class="container">
     <div id="auth-screen">
         <h1 style="color: var(--accent); font-weight: 900;">CINETECA ADMIN</h1>
-        <p id="auth-msg">Acesse para gerenciar o catálogo</p>
-        <button class="btn-google" id="login-trigger">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
-            Entrar com Google
-        </button>
+        <div style="max-width: 300px; width: 90%;">
+            <input type="password" id="admin-pass" placeholder="Digite a senha mestre">
+            <button class="btn-adm" onclick="verifyPass()">ACESSAR PAINEL</button>
+            <p id="error-msg" style="color: red; font-size: 12px; margin-top: 10px; display: none;">Senha incorreta!</p>
+        </div>
     </div>
 
     <div id="admin-content">
@@ -59,7 +58,7 @@
         <div class="card">
             <h3>1. Pesquisar no TMDB</h3>
             <div style="display: flex; gap: 10px;">
-                <input type="text" id="tmdb-query" placeholder="Ex: Vingadores, Breaking Bad...">
+                <input type="text" id="tmdb-query" placeholder="Ex: Deadpool, Stranger Things...">
                 <button class="btn-search" id="tmdb-btn">BUSCAR</button>
             </div>
             <div id="tmdb-results"></div>
@@ -70,7 +69,7 @@
             <form id="content-form">
                 <input type="text" id="f-title" placeholder="Título" required>
                 <input type="text" id="f-thumb" placeholder="URL da Capa" required>
-                <input type="text" id="f-url" placeholder="URL do Vídeo (YouTube, Dropbox, MP4)" required>
+                <input type="text" id="f-url" placeholder="URL do Vídeo (YT, Dropbox, MP4)" required>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                     <select id="f-genre">
@@ -103,7 +102,6 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyB46-sCSiJ1HSMARLY1aBgECu2yxnOKYSQ",
@@ -115,49 +113,31 @@
     };
 
     const TMDB_KEY = '49a7a1537e0a46f1f09d04d6dc111698';
-    const ADMIN_EMAIL = "luisff05.jua@gmail.com";
+    const MASTER_PASS = "Luisadm";
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
 
-    // ELEMENTOS
-    const authScreen = document.getElementById('auth-screen');
-    const adminContent = document.getElementById('admin-content');
-    const loginBtn = document.getElementById('login-trigger');
-    const authMsg = document.getElementById('auth-msg');
-
-    // --- AUTENTICAÇÃO ---
-    loginBtn.onclick = () => {
-        signInWithPopup(auth, provider).catch(e => alert("Erro: " + e.message));
-    };
-
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            if (user.email === ADMIN_EMAIL) {
-                authScreen.style.display = 'none';
-                adminContent.style.display = 'block';
-                loadCatalog();
-            } else {
-                authMsg.innerText = "Acesso Negado: " + user.email;
-                authMsg.style.color = "red";
-                auth.signOut();
-            }
+    // --- LOGICA DE ACESSO ---
+    window.verifyPass = () => {
+        const input = document.getElementById('admin-pass').value;
+        if(input === MASTER_PASS) {
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('admin-content').style.display = 'block';
+            loadCatalog();
         } else {
-            authScreen.style.display = 'flex';
-            adminContent.style.display = 'none';
+            document.getElementById('error-msg').style.display = 'block';
         }
-    });
+    };
 
     // --- BUSCA TMDB ---
     document.getElementById('tmdb-btn').onclick = async () => {
-        const query = document.getElementById('tmdb-query').value;
+        const queryVal = document.getElementById('tmdb-query').value;
         const type = document.getElementById('f-type').value === 'filme' ? 'movie' : 'tv';
-        if(!query) return;
+        if(!queryVal) return;
 
         try {
-            const res = await fetch(`https://api.themoviedb.org/3/search/${type}?api_key=${TMDB_KEY}&query=${encodeURIComponent(query)}&language=pt-BR`);
+            const res = await fetch(`https://api.themoviedb.org/3/search/${type}?api_key=${TMDB_KEY}&query=${encodeURIComponent(queryVal)}&language=pt-BR`);
             const data = await res.json();
             const resultsDiv = document.getElementById('tmdb-results');
             resultsDiv.innerHTML = "";
@@ -172,14 +152,13 @@
                 div.onclick = () => {
                     document.getElementById('f-title').value = title;
                     document.getElementById('f-thumb').value = poster;
-                    document.getElementById('f-url').focus();
                 };
                 resultsDiv.appendChild(div);
             });
-        } catch (e) { alert("Erro ao buscar no TMDB"); }
+        } catch (e) { console.error(e); }
     };
 
-    // --- SALVAR NO FIREBASE ---
+    // --- SALVAR ---
     document.getElementById('content-form').onsubmit = async (e) => {
         e.preventDefault();
         const btn = e.target.querySelector('button');
@@ -198,20 +177,18 @@
         try {
             const col = data.mediaType === 'filme' ? 'filmes' : 'videos';
             await addDoc(collection(db, col), data);
-            alert("Sucesso!");
+            alert("Conteúdo publicado com sucesso!");
             e.target.reset();
             document.getElementById('tmdb-results').innerHTML = "";
-        } catch (err) { alert("Erro ao salvar"); }
+        } catch (err) { alert("Erro ao salvar: " + err.message); }
         finally { btn.disabled = false; btn.innerText = "PUBLICAR NO APP"; }
     };
 
-    // --- LISTAR CATALOGO ---
+    // --- LISTAR ---
     function loadCatalog() {
         const listDiv = document.getElementById('catalog-list');
         listDiv.innerHTML = "";
-        const collections = ['filmes', 'videos'];
-
-        collections.forEach(colName => {
+        ['filmes', 'videos'].forEach(colName => {
             const q = query(collection(db, colName), orderBy("createdAt", "desc"));
             onSnapshot(q, (snap) => {
                 snap.docChanges().forEach(change => {
@@ -223,10 +200,7 @@
                         item.className = 'list-item';
                         item.innerHTML = `
                             <img src="${v.thumb}">
-                            <div class="list-info">
-                                <strong>${v.title}</strong><br>
-                                <small>${colName.toUpperCase()} | ${v.genre}</small>
-                            </div>
+                            <div class="list-info"><strong>${v.title}</strong><br><small>${colName.toUpperCase()}</small></div>
                             <button class="btn-del" onclick="deleteItem('${colName}', '${id}')">Excluir</button>
                         `;
                         listDiv.prepend(item);
@@ -238,7 +212,7 @@
     }
 
     window.deleteItem = async (col, id) => {
-        if(confirm("Excluir permanentemente?")) {
+        if(confirm("Deseja apagar este item?")) {
             await deleteDoc(doc(db, col, id));
         }
     };
@@ -246,3 +220,4 @@
 
 </body>
 </html>
+
