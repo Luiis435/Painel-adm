@@ -3,117 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADM - Catálogo Automático</title>
+    <title>ADM Ultra - Netflix Clone</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #ef4444; border-radius: 10px; }
+    </style>
 </head>
-<body class="bg-gray-900 text-white font-sans p-8">
+<body class="bg-gray-900 text-white font-sans p-4 md:p-8">
 
-    <div class="max-w-4xl mx-auto">
-        <h1 class="text-3xl font-bold mb-6 text-red-600">Netflix Clone ADM</h1>
+    <div class="max-w-5xl mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-black text-red-600 tracking-tighter">NETFLIX ADM</h1>
+            <span class="bg-gray-800 px-4 py-1 rounded-full text-xs font-bold border border-gray-700">PAINEL DE CONTROLE</span>
+        </header>
         
-        <div class="bg-gray-800 p-6 rounded-lg mb-8 shadow-xl">
-            <label class="block mb-2">Buscar Filme (TMDb):</label>
+        <div class="bg-gray-800 p-6 rounded-2xl mb-8 shadow-2xl border border-gray-700">
+            <label class="block mb-2 font-bold text-gray-400 uppercase text-xs">Importar do TMDb:</label>
             <div class="flex gap-4">
-                <input type="text" id="movieSearch" placeholder="Ex: Batman, Matrix..." class="flex-1 p-2 rounded bg-gray-700 border-none focus:ring-2 focus:ring-red-500 text-white">
-                <button onclick="buscarFilme()" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded font-bold transition">BUSCAR</button>
+                <input type="text" id="movieSearch" placeholder="Nome do filme..." class="flex-1 p-3 rounded-xl bg-gray-900 border border-gray-700 focus:ring-2 focus:ring-red-500 outline-none">
+                <button onclick="buscarFilme()" class="bg-red-600 hover:bg-red-700 px-8 rounded-xl font-bold transition transform active:scale-95">BUSCAR</button>
             </div>
         </div>
 
-        <div id="previewArea" class="hidden bg-gray-800 p-6 rounded-lg shadow-xl border border-gray-700">
-            <div class="flex flex-col md:flex-row gap-6">
-                <img id="pPoster" src="" class="w-48 rounded shadow-lg">
+        <div id="previewArea" class="hidden bg-gray-800 p-6 rounded-2xl shadow-2xl border border-gray-700 mb-12 animate-fade-in">
+            <div class="flex flex-col md:flex-row gap-8">
+                <img id="pPoster" src="" class="w-full md:w-56 rounded-xl shadow-2xl">
                 <div class="flex-1">
-                    <h2 id="pTitle" class="text-2xl font-bold mb-2"></h2>
-                    <p id="pGenres" class="text-red-400 text-sm mb-4 italic"></p>
-                    <p id="pOverview" class="text-gray-300 text-sm mb-4"></p>
+                    <h2 id="pTitle" class="text-3xl font-bold mb-1"></h2>
+                    <p id="pGenres" class="text-red-500 font-bold text-sm mb-4"></p>
                     
-                    <label class="block mb-2 text-sm font-bold">Link do Streaming (Vídeo):</label>
-                    <input type="text" id="videoUrl" placeholder="https://..." class="w-full p-2 mb-4 rounded bg-gray-700 border-none">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block mb-1 text-xs font-bold text-gray-500 uppercase">Link do Vídeo (Dropbox/URL):</label>
+                            <input type="text" id="videoUrl" class="w-full p-3 rounded-lg bg-gray-900 border border-gray-700 text-green-400 text-sm">
+                        </div>
+                        <div>
+                            <label class="block mb-1 text-xs font-bold text-gray-500 uppercase">Perfil do Público:</label>
+                            <select id="pPublico" class="w-full p-3 rounded-lg bg-gray-900 border border-gray-700 text-white font-bold">
+                                <option value="Adulto">Adulto (Geral)</option>
+                                <option value="Kids">Kids (Infantil)</option>
+                            </select>
+                        </div>
+                    </div>
                     
-                    <button onclick="salvarNoFirebase()" class="w-full bg-green-600 hover:bg-green-700 py-3 rounded font-bold">ADICIONAR AO CATÁLOGO</button>
+                    <button onclick="salvarNoFirebase()" id="btnSalvar" class="w-full bg-green-600 hover:bg-green-700 py-4 rounded-xl font-black text-xl transition shadow-lg uppercase">Confirmar e Salvar</button>
                 </div>
             </div>
+        </div>
+
+        <div class="mt-12">
+            <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+                <span class="w-2 h-6 bg-red-600 rounded-full"></span> 
+                Filmes no seu Catálogo
+            </h3>
+            <div id="listaFilmes" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
         </div>
     </div>
 
     <script>
-        // CONFIGURAÇÕES (SUBSTITUA PELAS SUAS)
+        // CONFIGURAÇÕES FIREBASE (Preencha aqui!)
         const firebaseConfig = {
-            apiKey: "AIzaSyB46-sCSiJ1HSMARLY1aBgECu2yxnOKYSQ",
-            authDomain: "cineteca-8f89c.firebaseapp.com",
-            projectId: "cineteca-8f89c",
-            storageBucket: "cineteca-8f89c.firebasestorage.app",
-            messagingSenderId: "944562373253",
-            appId: "1:944562373253:web:1ba79111e58d2ec44e5fec"
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_PROJETO.firebaseapp.com",
+            projectId: "SEU_PROJETO_ID",
+            storageBucket: "SEU_PROJETO.appspot.com",
+            messagingSenderId: "ID",
+            appId: "ID"
         };
-        const TMDB_KEY = '49a7a1537e0a46f1f09d04d6dc111698';
+        const TMDB_KEY = 'SUA_CHAVE_TMDB';
 
-        // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        let tempMovieData = {}; // Guarda o filme buscado antes de salvar
+        let tempMovieData = {};
 
-        // Mapeamento de Gêneros do TMDb (Exemplos)
-        const genreMap = {
-            28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 
-            80: "Crime", 99: "Documentário", 18: "Drama", 27: "Terror", 
-            878: "Ficção Científica", 1074: "Romance"
-        };
-
+        // 1. BUSCAR FILME NO TMDB
         async function buscarFilme() {
             const query = document.getElementById('movieSearch').value;
-            if(!query) return alert("Digite um nome!");
+            if(!query) return;
 
-            const url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${encodeURI(query)}&language=pt-BR`;
-            
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                const filme = data.results[0];
+            const res = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${encodeURI(query)}&language=pt-BR`);
+            const data = await res.json();
+            const filme = data.results[0];
 
-                if(filme) {
-                    tempMovieData = {
-                        titulo: filme.title,
-                        sinopse: filme.overview,
-                        poster: `https://image.tmdb.org/t/p/w500${filme.poster_path}`,
-                        categorias: filme.genre_ids.map(id => genreMap[id] || "Outros"),
-                        ano: new Date(filme.release_date).getFullYear(),
-                        nota: filme.vote_average
-                    };
+            if(filme) {
+                tempMovieData = {
+                    titulo: filme.title,
+                    sinopse: filme.overview,
+                    poster: `https://image.tmdb.org/t/p/w500${filme.poster_path}`,
+                    categorias: filme.genre_ids.map(id => "Geral"), // Simplificado
+                    ano: new Date(filme.release_date).getFullYear(),
+                    nota: filme.vote_average
+                };
 
-                    // Preencher UI
-                    document.getElementById('pTitle').innerText = tempMovieData.titulo;
-                    document.getElementById('pPoster').src = tempMovieData.poster;
-                    document.getElementById('pGenres').innerText = tempMovieData.categorias.join(" • ");
-                    document.getElementById('pOverview').innerText = tempMovieData.sinopse;
-                    document.getElementById('previewArea').classList.remove('hidden');
-                } else {
-                    alert("Nenhum filme encontrado.");
-                }
-            } catch (err) {
-                console.error(err);
+                document.getElementById('pTitle').innerText = tempMovieData.titulo;
+                document.getElementById('pPoster').src = tempMovieData.poster;
+                document.getElementById('pGenres').innerText = "Importado com sucesso!";
+                document.getElementById('previewArea').classList.remove('hidden');
             }
         }
 
+        // 2. SALVAR NO FIREBASE
         async function salvarNoFirebase() {
-            const videoUrl = document.getElementById('videoUrl').value;
-            if(!videoUrl) return alert("Insira o link do vídeo!");
+            let videoUrl = document.getElementById('videoUrl').value;
+            const publico = document.getElementById('pPublico').value;
+
+            if(!videoUrl) return alert("Cole o link do vídeo!");
+            if (videoUrl.includes("dropbox.com")) videoUrl = videoUrl.replace("dl=0", "raw=1");
 
             try {
                 await db.collection("filmes").add({
                     ...tempMovieData,
                     urlStream: videoUrl,
+                    perfil: publico, // SALVA SE É ADULTO OU KIDS
                     dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                alert("Sucesso! Filme já está nas categorias.");
+                alert("Filme adicionado!");
                 location.reload();
-            } catch (e) {
-                alert("Erro ao salvar: " + e.message);
+            } catch (e) { alert("Erro: " + e.message); }
+        }
+
+        // 3. CARREGAR LISTA E OPÇÃO DE APAGAR
+        function carregarCatálogo() {
+            db.collection("filmes").orderBy("dataCriacao", "desc").onSnapshot((snapshot) => {
+                const lista = document.getElementById('listaFilmes');
+                lista.innerHTML = "";
+                
+                snapshot.forEach((doc) => {
+                    const f = doc.data();
+                    lista.innerHTML += `
+                        <div class="bg-gray-800 rounded-xl overflow-hidden border border-gray-700 group hover:border-red-500 transition">
+                            <div class="relative">
+                                <img src="${f.poster}" class="w-full h-40 object-cover opacity-60 group-hover:opacity-100 transition">
+                                <span class="absolute top-2 right-2 bg-black/80 text-[10px] px-2 py-1 rounded font-bold ${f.perfil === 'Kids' ? 'text-yellow-400' : 'text-red-500'}">
+                                    ${f.perfil.toUpperCase()}
+                                </span>
+                            </div>
+                            <div class="p-4">
+                                <h4 class="font-bold truncate text-sm">${f.titulo}</h4>
+                                <button onclick="apagarFilme('${doc.id}')" class="mt-3 w-full bg-gray-700 hover:bg-red-900 text-xs py-2 rounded transition font-bold uppercase tracking-widest">Apagar</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        async function apagarFilme(id) {
+            if(confirm("Tem certeza que deseja remover este filme do catálogo?")) {
+                await db.collection("filmes").doc(id).delete();
             }
         }
+
+        // Iniciar carregamento
+        carregarCatálogo();
     </script>
 </body>
 </html>
