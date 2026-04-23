@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineTeca - Admin Master</title>
+    <title>CineTeca - Admin Master Ultra</title>
     <style>
         :root { --accent: #E50914; --bg: #111; --tmdb-blue: #01b4e4; }
         body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
@@ -18,16 +18,19 @@
         input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; background: #2b2b2b; border: 1px solid #444; color: white; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
         textarea { height: 80px; resize: none; }
         
+        /* Destaque para o campo que você precisa preencher */
+        #f-url { border: 2px solid var(--tmdb-blue); background: #1a262e; }
+
         .btn-adm { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; width: 200px; }
         .btn-search { background: var(--tmdb-blue); border: none; color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .btn-save { background: var(--accent); border: none; color: white; width: 100%; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1rem; margin-top: 10px; }
 
         #tmdb-results { display: flex; gap: 15px; overflow-x: auto; padding: 10px 0; margin-bottom: 10px; min-height: 150px; }
-        .tmdb-item { min-width: 110px; cursor: pointer; transition: 0.3s; position: relative; }
+        .tmdb-item { min-width: 110px; cursor: pointer; transition: 0.3s; }
         .tmdb-item:hover { transform: scale(1.05); }
         .tmdb-item img { width: 100%; border-radius: 6px; border: 2px solid transparent; }
         .tmdb-item:hover img { border-color: var(--tmdb-blue); }
-        .tmdb-item p { font-size: 11px; text-align: center; margin-top: 5px; color: #ccc; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tmdb-item p { font-size: 11px; text-align: center; margin-top: 5px; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .list-item { display: flex; align-items: center; background: #1a1a1a; padding: 10px; border-radius: 8px; margin-bottom: 10px; gap: 15px; border-left: 4px solid var(--accent); }
         .list-item img { width: 45px; height: 65px; object-fit: cover; border-radius: 4px; }
@@ -41,34 +44,31 @@
     <div id="auth-screen">
         <h1 style="color: var(--accent); font-weight: 900;">CINETECA ADMIN</h1>
         <div style="max-width: 300px; width: 90%;">
-            <input type="password" id="admin-pass" placeholder="Digite a senha mestre">
-            <button class="btn-adm" onclick="verifyPass()">ACESSAR PAINEL</button>
-            <p id="error-msg" style="color: red; font-size: 12px; margin-top: 10px; display: none;">Senha incorreta!</p>
+            <input type="password" id="admin-pass" placeholder="Senha mestre">
+            <button class="btn-adm" onclick="verifyPass()">ACESSAR</button>
         </div>
     </div>
 
     <div id="admin-content">
-        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2>Painel de Controle</h2>
-            <button onclick="location.reload()" style="background: none; border: 1px solid #666; color: #aaa; cursor: pointer; padding: 5px 10px; border-radius: 4px;">Sair</button>
-        </header>
-
         <div class="card">
-            <h3>1. Pesquisar no TMDB</h3>
+            <h3>1. Buscar Filme ou Série</h3>
             <div style="display: flex; gap: 10px;">
-                <input type="text" id="tmdb-query" placeholder="Ex: Deadpool, Stranger Things...">
+                <input type="text" id="tmdb-query" placeholder="Digite o nome...">
                 <button class="btn-search" id="tmdb-btn">BUSCAR</button>
             </div>
             <div id="tmdb-results"></div>
         </div>
 
         <div class="card">
-            <h3>2. Confirmar Dados</h3>
+            <h3>2. Informações Automáticas</h3>
             <form id="content-form">
-                <input type="text" id="f-title" placeholder="Título" required>
-                <input type="text" id="f-thumb" placeholder="URL da Capa" required>
-                <input type="text" id="f-url" placeholder="URL do Vídeo (YT, Dropbox, MP4)" required>
-                <textarea id="f-desc" placeholder="Sinopse do conteúdo..."></textarea>
+                <input type="text" id="f-title" placeholder="Título (Auto)" required>
+                <input type="text" id="f-thumb" placeholder="URL da Capa (Auto)" required>
+                
+                <p style="color: var(--tmdb-blue); font-size: 12px; margin: 0;">↓ Cole o link abaixo (Dropbox converte sozinho)</p>
+                <input type="text" id="f-url" placeholder="COLE A URL DO VÍDEO AQUI" required>
+                
+                <textarea id="f-desc" placeholder="Sinopse (Auto)"></textarea>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
                     <select id="f-genre">
@@ -91,11 +91,11 @@
                         <option value="infantil">Infantil</option>
                     </select>
                 </div>
-                <button type="submit" class="btn-save">PUBLICAR NO APP</button>
+                <button type="submit" class="btn-save">PUBLICAR AGORA</button>
             </form>
         </div>
 
-        <h3>Catálogo Ativo</h3>
+        <h3>Catálogo</h3>
         <div id="catalog-list"></div>
     </div>
 </div>
@@ -104,7 +104,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // --- CONFIGURAÇÕES ---
     const firebaseConfig = {
         apiKey: "AIzaSyB46-sCSiJ1HSMARLY1aBgECu2yxnOKYSQ",
         authDomain: "cineteca-8f89c.firebaseapp.com",
@@ -118,77 +117,71 @@
     const MASTER_PASS = "Luisadm";
 
     const GENRE_MAP = {
-        28: "Ação", 12: "Aventura", 16: "Anime", 35: "Comédia", 
-        80: "Ação", 99: "Drama", 18: "Drama", 10751: "Infantil", 
-        14: "Ficção", 27: "Terror", 10749: "Drama", 878: "Ficção", 
-        53: "Suspense", 10759: "Ação", 10765: "Ficção"
+        28: "Ação", 12: "Aventura", 16: "Anime", 35: "Comédia", 80: "Ação", 
+        18: "Drama", 10751: "Infantil", 14: "Ficção", 27: "Terror", 
+        878: "Ficção", 53: "Suspense", 10759: "Ação", 10765: "Ficção"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // --- LOGICA DE ACESSO ---
     window.verifyPass = () => {
-        const input = document.getElementById('admin-pass').value;
-        if(input === MASTER_PASS) {
+        if(document.getElementById('admin-pass').value === MASTER_PASS) {
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('admin-content').style.display = 'block';
             loadCatalog();
-        } else {
-            document.getElementById('error-msg').style.display = 'block';
         }
     };
 
-    // --- BUSCA TMDB ---
     document.getElementById('tmdb-btn').onclick = async () => {
         const queryVal = document.getElementById('tmdb-query').value;
         const type = document.getElementById('f-type').value === 'filme' ? 'movie' : 'tv';
-        const resultsDiv = document.getElementById('tmdb-results');
-
         if(!queryVal) return;
-        resultsDiv.innerHTML = "<p style='font-size:12px;'>Buscando...</p>";
 
-        try {
-            const res = await fetch(`https://api.themoviedb.org/3/search/${type}?api_key=${TMDB_KEY}&query=${encodeURIComponent(queryVal)}&language=pt-BR`);
-            const data = await res.json();
-            resultsDiv.innerHTML = "";
+        const res = await fetch(`https://api.themoviedb.org/3/search/${type}?api_key=${TMDB_KEY}&query=${encodeURIComponent(queryVal)}&language=pt-BR`);
+        const data = await res.json();
+        const resultsDiv = document.getElementById('tmdb-results');
+        resultsDiv.innerHTML = "";
 
-            if(data.results.length === 0) resultsDiv.innerHTML = "<p>Nenhum resultado.</p>";
+        data.results.slice(0, 6).forEach(item => {
+            const title = item.title || item.name;
+            const poster = `https://image.tmdb.org/t/p/w342${item.poster_path}`;
+            const gName = GENRE_MAP[item.genre_ids[0]] || "Ação";
 
-            data.results.slice(0, 8).forEach(item => {
-                const title = item.title || item.name;
-                const poster = item.poster_path ? `https://image.tmdb.org/t/p/w342${item.poster_path}` : 'https://via.placeholder.com/342x513';
-                const genreId = item.genre_ids ? item.genre_ids[0] : null;
-                const genreName = GENRE_MAP[genreId] || "Ação";
-
-                const div = document.createElement('div');
-                div.className = 'tmdb-item';
-                div.innerHTML = `<img src="${poster}"><p>${title}</p>`;
+            const div = document.createElement('div');
+            div.className = 'tmdb-item';
+            div.innerHTML = `<img src="${poster}"><p>${title}</p>`;
+            div.onclick = () => {
+                document.getElementById('f-title').value = title;
+                document.getElementById('f-thumb').value = poster;
+                document.getElementById('f-desc').value = item.overview;
+                document.getElementById('f-genre').value = gName;
                 
-                div.onclick = () => {
-                    document.getElementById('f-title').value = title;
-                    document.getElementById('f-thumb').value = poster;
-                    document.getElementById('f-desc').value = item.overview || "";
-                    document.getElementById('f-genre').value = genreName;
-                    document.getElementById('content-form').scrollIntoView({behavior: "smooth"});
-                };
-                resultsDiv.appendChild(div);
-            });
-        } catch (e) { 
-            resultsDiv.innerHTML = "<p>Erro na busca.</p>";
-        }
+                // FOCO AUTOMÁTICO NO LINK
+                const urlInput = document.getElementById('f-url');
+                urlInput.focus();
+                urlInput.scrollIntoView({behavior: "smooth"});
+            };
+            resultsDiv.appendChild(div);
+        });
     };
 
-    // --- SALVAR ---
     document.getElementById('content-form').onsubmit = async (e) => {
         e.preventDefault();
         const btn = e.target.querySelector('button');
-        btn.disabled = true; btn.innerText = "Publicando...";
+        btn.disabled = true;
+
+        let videoUrl = document.getElementById('f-url').value;
+        
+        // AUTO CONVERSÃO DROPBOX
+        if(videoUrl.includes("dropbox.com")) {
+            videoUrl = videoUrl.replace("dl=0", "raw=1").replace("www.dropbox.com", "dl.dropboxusercontent.com");
+        }
 
         const data = {
             title: document.getElementById('f-title').value,
             thumb: document.getElementById('f-thumb').value,
-            url: document.getElementById('f-url').value,
+            url: videoUrl,
             desc: document.getElementById('f-desc').value,
             genre: document.getElementById('f-genre').value,
             mediaType: document.getElementById('f-type').value,
@@ -197,56 +190,36 @@
         };
 
         try {
-            const colName = data.mediaType === 'filme' ? 'filmes' : 'videos';
-            await addDoc(collection(db, colName), data);
-            alert("Publicado com sucesso!");
+            await addDoc(collection(db, data.mediaType === 'filme' ? 'filmes' : 'videos'), data);
+            alert("Publicado!");
             e.target.reset();
             document.getElementById('tmdb-results').innerHTML = "";
-        } catch (err) { alert("Erro ao salvar: " + err.message); }
-        finally { btn.disabled = false; btn.innerText = "PUBLICAR NO APP"; }
+        } catch (err) { alert(err.message); }
+        finally { btn.disabled = false; }
     };
 
-    // --- LISTAR ---
     function loadCatalog() {
         const listDiv = document.getElementById('catalog-list');
-        listDiv.innerHTML = "";
-        
-        ['filmes', 'videos'].forEach(colName => {
-            const q = query(collection(db, colName), orderBy("createdAt", "desc"));
-            onSnapshot(q, (snap) => {
+        ['filmes', 'videos'].forEach(col => {
+            onSnapshot(query(collection(db, col), orderBy("createdAt", "desc")), (snap) => {
                 snap.docChanges().forEach(change => {
                     const id = change.doc.id;
                     const v = change.doc.data();
-                    
                     if(change.type === "added") {
-                        const item = document.createElement('div');
-                        item.id = `item-${id}`;
-                        item.className = 'list-item';
-                        item.innerHTML = `
-                            <img src="${v.thumb}">
-                            <div class="list-info">
-                                <strong>${v.title}</strong><br>
-                                <small style="color: #888;">${colName.toUpperCase()} • ${v.genre}</small>
-                            </div>
-                            <button class="btn-del" onclick="window.deleteItem('${colName}', '${id}')">Excluir</button>
-                        `;
-                        listDiv.prepend(item);
+                        const div = document.createElement('div');
+                        div.id = `item-${id}`;
+                        div.className = 'list-item';
+                        div.innerHTML = `<img src="${v.thumb}"><div class="list-info"><strong>${v.title}</strong></div><button class="btn-del" onclick="deleteItem('${col}','${id}')">X</button>`;
+                        listDiv.prepend(div);
                     }
-                    if(change.type === "removed") {
-                        document.getElementById(`item-${id}`)?.remove();
-                    }
+                    if(change.type === "removed") document.getElementById(`item-${id}`)?.remove();
                 });
             });
         });
     }
 
-    window.deleteItem = async (col, id) => {
-        if(confirm("Deseja apagar este item?")) {
-            await deleteDoc(doc(db, col, id));
-        }
-    };
+    window.deleteItem = async (c, i) => { if(confirm("Apagar?")) await deleteDoc(doc(db, c, i)); };
 </script>
-
 </body>
 </html>
 
