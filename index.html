@@ -3,159 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineTeca Admin - Pro</title>
-    <style>
-        :root { --red: #E50914; --bg: #111; --card: #181818; }
-        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; padding: 20px; display: flex; justify-content: center; }
-        .admin-box { width: 100%; max-width: 500px; background: var(--card); padding: 30px; border-radius: 12px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h1 { color: var(--red); text-align: center; margin-bottom: 25px; font-weight: 900; }
-        
-        label { display: block; margin-top: 15px; color: #aaa; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
-        input, select { width: 100%; height: 48px; background: #252525; border: 1px solid #333; color: white; padding: 0 12px; margin-top: 5px; border-radius: 6px; box-sizing: border-box; outline: none; transition: 0.3s; }
-        input:focus { border-color: var(--red); }
-
-        .search-group { display: flex; gap: 8px; align-items: flex-end; }
-        .btn-search { background: #333; border: 1px solid #444; color: white; height: 48px; width: 60px; border-radius: 6px; cursor: pointer; font-size: 1.2rem; }
-        .btn-search:hover { background: #444; }
-
-        .preview-container { text-align: center; margin-top: 15px; }
-        .thumb-preview { width: 120px; height: 180px; background: #222; border-radius: 6px; object-fit: cover; display: none; border: 2px solid #333; margin: 0 auto; }
-        
-        button#publish { width: 100%; height: 55px; background: var(--red); color: white; border: none; font-weight: bold; margin-top: 30px; border-radius: 6px; cursor: pointer; font-size: 1rem; text-transform: uppercase; }
-        button#publish:hover { background: #b20710; transform: translateY(-2px); }
-        .status { margin-top: 20px; text-align: center; font-size: 0.9rem; min-height: 20px; }
-    </style>
+    <title>ADM - Catálogo Automático</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
-<body>
+<body class="bg-gray-900 text-white font-sans p-8">
 
-<div class="admin-box">
-    <h1>CINETECA ADMIN</h1>
-    
-    <label>Título do Filme ou Série</label>
-    <div class="search-group">
-        <input type="text" id="title" placeholder="Ex: Batman">
-        <button class="btn-search" onclick="searchTMDB()" title="Buscar Capa Automática">🔍</button>
-    </div>
-
-    <div class="preview-container">
-        <img id="preview" class="thumb-preview">
-        <input type="hidden" id="thumb"> </div>
-
-    <label>Link do Vídeo (YouTube ou Dropbox)</label>
-    <input type="text" id="url" placeholder="Cole o link original aqui...">
-
-    <label>Gênero Principal</label>
-    <input type="text" id="genre" placeholder="Ex: Ação, Comédia...">
-
-    <div style="display: flex; gap: 12px;">
-        <div style="flex: 1;">
-            <label>Tipo</label>
-            <select id="mediaType">
-                <option value="filme">🎬 Filme</option>
-                <option value="serie">📺 Série</option>
-            </select>
-        </div>
-        <div style="flex: 1;">
-            <label>Público</label>
-            <select id="rating">
-                <option value="adulto">Adulto</option>
-                <option value="infantil">Kids</option>
-            </select>
-        </div>
-    </div>
-
-    <button id="publish" onclick="uploadVideo()">Publicar Agora</button>
-    <div id="status" class="status"></div>
-</div>
-
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyB46-sCSiJ1HSMARLY1aBgECu2yxnOKYSQ",
-        authDomain: "cineteca-8f89c.firebaseapp.com",
-        projectId: "cineteca-8f89c",
-        storageBucket: "cineteca-8f89c.firebasestorage.app",
-        messagingSenderId: "944562373253",
-        appId: "1:944562373253:web:1ba79111e58d2ec44e5fec"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    // CHAVE DA API TMDB (Obtenha em themoviedb.org)
-    const TMDB_KEY = '49a7a1537e0a46f1f09d04d6dc111698'; 
-
-    // BUSCA AUTOMÁTICA DE CAPAS
-    window.searchTMDB = async () => {
-        const title = document.getElementById('title').value;
-        const status = document.getElementById('status');
-        if (!title) return alert("Digite um nome antes de buscar!");
-
-        status.innerText = "Buscando capa...";
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-red-600">Netflix Clone ADM</h1>
         
-        try {
-            const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&language=pt-BR&query=${title}`);
-            const data = await res.json();
+        <div class="bg-gray-800 p-6 rounded-lg mb-8 shadow-xl">
+            <label class="block mb-2">Buscar Filme (TMDb):</label>
+            <div class="flex gap-4">
+                <input type="text" id="movieSearch" placeholder="Ex: Batman, Matrix..." class="flex-1 p-2 rounded bg-gray-700 border-none focus:ring-2 focus:ring-red-500 text-white">
+                <button onclick="buscarFilme()" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded font-bold transition">BUSCAR</button>
+            </div>
+        </div>
 
-            if (data.results && data.results.length > 0) {
-                const item = data.results[0];
-                const poster = `https://image.tmdb.org/t/p/w500${item.poster_path}`;
-                
-                document.getElementById('thumb').value = poster;
-                document.getElementById('preview').src = poster;
-                document.getElementById('preview').style.display = 'block';
-                document.getElementById('mediaType').value = item.media_type === 'tv' ? 'serie' : 'filme';
-                
-                status.innerText = "Capa encontrada!";
-                status.style.color = "#2ecc71";
-            } else {
-                alert("Nenhuma capa encontrada para este título.");
-            }
-        } catch (e) {
-            alert("Erro na busca: Verifique sua chave API.");
-        }
-    };
+        <div id="previewArea" class="hidden bg-gray-800 p-6 rounded-lg shadow-xl border border-gray-700">
+            <div class="flex flex-col md:flex-row gap-6">
+                <img id="pPoster" src="" class="w-48 rounded shadow-lg">
+                <div class="flex-1">
+                    <h2 id="pTitle" class="text-2xl font-bold mb-2"></h2>
+                    <p id="pGenres" class="text-red-400 text-sm mb-4 italic"></p>
+                    <p id="pOverview" class="text-gray-300 text-sm mb-4"></p>
+                    
+                    <label class="block mb-2 text-sm font-bold">Link do Streaming (Vídeo):</label>
+                    <input type="text" id="videoUrl" placeholder="https://..." class="w-full p-2 mb-4 rounded bg-gray-700 border-none">
+                    
+                    <button onclick="salvarNoFirebase()" class="w-full bg-green-600 hover:bg-green-700 py-3 rounded font-bold">ADICIONAR AO CATÁLOGO</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    // ENVIO PARA O FIREBASE
-    window.uploadVideo = async () => {
-        const title = document.getElementById('title').value;
-        let url = document.getElementById('url').value;
-        const thumb = document.getElementById('thumb').value;
-        const genre = document.getElementById('genre').value;
-        const mediaType = document.getElementById('mediaType').value;
-        const rating = document.getElementById('rating').value;
-        const status = document.getElementById('status');
+    <script>
+        // CONFIGURAÇÕES (SUBSTITUA PELAS SUAS)
+        const firebaseConfig = {
+            apiKey: "AIzaSyB46-sCSiJ1HSMARLY1aBgECu2yxnOKYSQ",
+            authDomain: "cineteca-8f89c.firebaseapp.com",
+            projectId: "cineteca-8f89c",
+            storageBucket: "cineteca-8f89c.firebasestorage.app",
+            messagingSenderId: "ID",
+            appId: "ID"
+        };
+        const TMDB_KEY = '49a7a1537e0a46f1f09d04d6dc111698';
 
-        if(!title || !url || !thumb) return alert("Preencha todos os campos e busque a capa!");
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        status.innerText = "Publicando...";
-        status.style.color = "white";
+        let tempMovieData = {}; // Guarda o filme buscado antes de salvar
 
-        // CONVERSÃO AUTOMÁTICA DROPBOX
-        if (url.includes("dropbox.com")) {
-            url = url.replace(/dl=0/g, "raw=1").replace(/www\.dropbox\.com/g, "dl.dropboxusercontent.com");
-        }
+        // Mapeamento de Gêneros do TMDb (Exemplos)
+        const genreMap = {
+            28: "Ação", 12: "Aventura", 16: "Animação", 35: "Comédia", 
+            80: "Crime", 99: "Documentário", 18: "Drama", 27: "Terror", 
+            878: "Ficção Científica", 1074: "Romance"
+        };
 
-        const videoType = (url.includes('youtube.com') || url.includes('youtu.be')) ? 'embed' : 'file';
+        async function buscarFilme() {
+            const query = document.getElementById('movieSearch').value;
+            if(!query) return alert("Digite um nome!");
 
-        try {
-            await addDoc(collection(db, "videos"), {
-                title, url, thumb, genre, mediaType, rating, videoType,
-                createdAt: serverTimestamp()
-            });
-            status.innerText = "✅ PUBLICADO COM SUCESSO!";
-            status.style.color = "#2ecc71";
+            const url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${encodeURI(query)}&language=pt-BR`;
             
-            // Limpar Campos
-            setTimeout(() => { location.reload(); }, 2000);
-        } catch (e) {
-            status.innerText = "❌ Erro: " + e.message;
-            status.style.color = "#e74c3c";
-        }
-    };
-</script>
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                const filme = data.results[0];
 
+                if(filme) {
+                    tempMovieData = {
+                        titulo: filme.title,
+                        sinopse: filme.overview,
+                        poster: `https://image.tmdb.org/t/p/w500${filme.poster_path}`,
+                        categorias: filme.genre_ids.map(id => genreMap[id] || "Outros"),
+                        ano: new Date(filme.release_date).getFullYear(),
+                        nota: filme.vote_average
+                    };
+
+                    // Preencher UI
+                    document.getElementById('pTitle').innerText = tempMovieData.titulo;
+                    document.getElementById('pPoster').src = tempMovieData.poster;
+                    document.getElementById('pGenres').innerText = tempMovieData.categorias.join(" • ");
+                    document.getElementById('pOverview').innerText = tempMovieData.sinopse;
+                    document.getElementById('previewArea').classList.remove('hidden');
+                } else {
+                    alert("Nenhum filme encontrado.");
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function salvarNoFirebase() {
+            const videoUrl = document.getElementById('videoUrl').value;
+            if(!videoUrl) return alert("Insira o link do vídeo!");
+
+            try {
+                await db.collection("filmes").add({
+                    ...tempMovieData,
+                    urlStream: videoUrl,
+                    dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("Sucesso! Filme já está nas categorias.");
+                location.reload();
+            } catch (e) {
+                alert("Erro ao salvar: " + e.message);
+            }
+        }
+    </script>
 </body>
 </html>
+
