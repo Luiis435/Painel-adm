@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CineTeca - Admin Master Ultra</title>
     <style>
-        :root { --accent: #E50914; --bg: #111; --tmdb-blue: #01b4e4; }
+        :root { --accent: #E50914; --bg: #111; --tmdb-blue: #01b4e4; --archive-green: #228B22; }
         body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; padding: 0; }
         .container { max-width: 900px; margin: 0 auto; padding: 20px; }
         
@@ -23,6 +23,7 @@
 
         .btn-adm { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; width: 200px; }
         .btn-search { background: var(--tmdb-blue); border: none; color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-archive { background: var(--archive-green); border: none; color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-left: 5px; }
         .btn-save { background: var(--accent); border: none; color: white; width: 100%; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1rem; margin-top: 10px; }
 
         #tmdb-results { display: flex; gap: 15px; overflow-x: auto; padding: 10px 0; margin-bottom: 10px; min-height: 150px; }
@@ -54,7 +55,8 @@
             <h3>1. Buscar Filme ou Série</h3>
             <div style="display: flex; gap: 10px;">
                 <input type="text" id="tmdb-query" placeholder="Digite o nome...">
-                <button class="btn-search" id="tmdb-btn">BUSCAR</button>
+                <button class="btn-search" id="tmdb-btn">TMDB</button>
+                <button class="btn-archive" id="archive-btn">ARCHIVE.ORG</button>
             </div>
             <div id="tmdb-results"></div>
         </div>
@@ -133,6 +135,7 @@
         }
     };
 
+    // --- BUSCA TMDB ---
     document.getElementById('tmdb-btn').onclick = async () => {
         const queryVal = document.getElementById('tmdb-query').value;
         const type = document.getElementById('f-type').value === 'filme' ? 'movie' : 'tv';
@@ -157,7 +160,6 @@
                 document.getElementById('f-desc').value = item.overview;
                 document.getElementById('f-genre').value = gName;
                 
-                // FOCO AUTOMÁTICO NO LINK
                 const urlInput = document.getElementById('f-url');
                 urlInput.focus();
                 urlInput.scrollIntoView({behavior: "smooth"});
@@ -165,6 +167,53 @@
             resultsDiv.appendChild(div);
         });
     };
+
+    // --- BUSCA NO ARCHIVE.ORG ---
+    document.getElementById('archive-btn').onclick = async () => {
+        const movieTitle = document.getElementById('tmdb-query').value;
+        if(!movieTitle) return;
+        
+        const resultsDiv = document.getElementById('tmdb-results');
+        resultsDiv.innerHTML = "<p>Procurando arquivo de vídeo...</p>";
+
+        const cleanTitle = movieTitle.replace(/[^a-zA-Z0-9 ]/g, "");
+        
+        const url = `https://archive.org/advancedsearch.php?q=title%3A(${cleanTitle})+AND+mediatype%3Amovies+AND+format%3A(MP4)&fl[]=identifier,title,description&output=json`;
+
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            const docs = data.response.docs;
+
+            resultsDiv.innerHTML = "";
+
+            if(docs.length === 0) {
+                alert("Nenhum vídeo direto encontrado no Archive.org para este título.");
+                return;
+            }
+
+            docs.slice(0, 5).forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'tmdb-item';
+                const thumb = `https://archive.org/services/img/${item.identifier}`;
+                
+                div.innerHTML = `<img src="${thumb}"><p>${item.title}</p>`;
+                
+                div.onclick = () => {
+                    const videoDirectLink = `https://archive.org/download/${item.identifier}/${item.identifier}.mp4`;
+                    
+                    document.getElementById('f-title').value = item.title;
+                    document.getElementById('f-url').value = videoDirectLink;
+                    document.getElementById('f-desc').value = item.description || "";
+                    alert("Link do Archive.org gerado com sucesso!");
+                };
+                resultsDiv.appendChild(div);
+            });
+        } catch (e) {
+            console.error(e);
+            alert("Erro ao conectar com Archive.org");
+        }
+    }
 
     document.getElementById('content-form').onsubmit = async (e) => {
         e.preventDefault();
